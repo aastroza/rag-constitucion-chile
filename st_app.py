@@ -10,7 +10,7 @@ prompt = st.text_input("Ingresa un tema de tu interés, te contaremos que dice c
 
 if st.button("Consultar"):
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
     
     with st.spinner('Espera unos segundos, estamos procesando tu consulta...'):
         response_vigente = query_engine_vigente.query(prompt)
@@ -32,6 +32,6 @@ if st.button("Consultar"):
                 st.markdown(f'[{source.replace("Source ", "" ).replace(":", "")}] {capitulo}, {articulo}\n')
 
         response_final = get_final_response(prompt, response_vigente, response_propuesta)
-        with col3:
-            st.subheader("Comparación")
-            st.markdown(response_final)       
+
+        st.subheader("Comparación")
+        st.markdown(response_final)       
