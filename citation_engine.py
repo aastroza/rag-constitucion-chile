@@ -39,7 +39,7 @@ def create_query_engine(documents_path = "data/documents/", persist_dir = "./cit
 
 def get_final_response(query, response_vigente, response_propuesta):
     template = """
-            You are a Constitutional Lawyer. You are asked to give a talk about 
+            You are a Constitutional Lawyer. You are asked to give a brief response about 
             the diferences of two constitutions about this topic: {query}.
 
             The first constitution is the current one, and the second one is a proposed one.
@@ -49,7 +49,7 @@ def get_final_response(query, response_vigente, response_propuesta):
             The second constituion says the following about the topic: {second_response}.
 
             Please detail the differences between the two constitutions about this topic.
-            Please respond in spanish.
+            Please be concise and respond in spanish.
             
            """
     prompt = PromptTemplate(template=template, input_variables=["query", "first_response", "second_response"])
