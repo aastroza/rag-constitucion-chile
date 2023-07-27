@@ -10,13 +10,10 @@ prompt = st.text_input("Ingresa un tema de tu interés, te contaremos que dice c
 
 if st.button("Consultar"):
 
+    col1, col2, col3 = st.columns(3)
+    
     with st.spinner('Espera unos segundos, estamos procesando tu consulta...'):
         response_vigente = query_engine_vigente.query(prompt)
-        response_propuesta = query_engine_propuesta.query(prompt)
-        response_final = get_final_response(prompt, response_vigente, response_propuesta)
-
-        col1, col2, col3 = st.columns(3)
-
         with col1:
             st.subheader("Constitución Actual")
             st.markdown(response_vigente)
@@ -25,6 +22,8 @@ if st.button("Consultar"):
                 [source, capitulo, articulo] = node.node.get_text().split('\n', 3)[0:3]
                 st.markdown(f'[{source.replace("Source ", "" ).replace(":", "")}] {capitulo}, {articulo}\n')
 
+    with st.spinner('Espera unos segundos, estamos procesando tu consulta...'):
+        response_propuesta = query_engine_propuesta.query(prompt)
         with col2:
             st.subheader("Constitución Propuesta")
             st.markdown(response_propuesta)
@@ -33,6 +32,8 @@ if st.button("Consultar"):
                 [source, capitulo, articulo] = node.node.get_text().split('\n', 3)[0:3]
                 st.markdown(f'[{source.replace("Source ", "" ).replace(":", "")}] {capitulo}, {articulo}\n')
 
+    with st.spinner('Espera unos segundos, estamos procesando tu consulta...'):
+        response_final = get_final_response(prompt, response_vigente, response_propuesta)
         with col3:
             st.subheader("Comparación")
-            st.markdown(response_final)
+            st.markdown(response_final)       
