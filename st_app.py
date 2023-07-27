@@ -22,7 +22,6 @@ if st.button("Consultar"):
                 [source, capitulo, articulo] = node.node.get_text().split('\n', 3)[0:3]
                 st.markdown(f'[{source.replace("Source ", "" ).replace(":", "")}] {capitulo}, {articulo}\n')
 
-    with st.spinner('Espera unos segundos, estamos procesando tu consulta...'):
         response_propuesta = query_engine_propuesta.query(prompt)
         with col2:
             st.subheader("Constitución Propuesta")
@@ -32,7 +31,6 @@ if st.button("Consultar"):
                 [source, capitulo, articulo] = node.node.get_text().split('\n', 3)[0:3]
                 st.markdown(f'[{source.replace("Source ", "" ).replace(":", "")}] {capitulo}, {articulo}\n')
 
-    with st.spinner('Espera unos segundos, estamos procesando tu consulta...'):
         response_final = get_final_response(prompt, response_vigente, response_propuesta)
         with col3:
             st.subheader("Comparación")
