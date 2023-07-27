@@ -23,7 +23,7 @@ if st.button("Consultar"):
             st.subheader("Fuentes")
             for node in response_vigente.source_nodes:
                 [source, capitulo, articulo] = node.node.get_text().split('\n', 3)[0:3]
-                st.markdown(f'-{source.replace("Source", "Fuente" )} {capitulo}, {articulo}\n')
+                st.markdown(f'-[{source.replace("Source ", "" )}] {capitulo}, {articulo}\n')
 
         with col2:
             st.subheader("Constitución Propuesta")
@@ -31,7 +31,7 @@ if st.button("Consultar"):
             st.subheader("Fuentes")
             for node in response_propuesta.source_nodes:
                 [source, capitulo, articulo] = node.node.get_text().split('\n', 3)[0:3]
-                st.markdown(f'-{source.replace("Source", "Fuente" )} {capitulo}, {articulo}\n')
+                st.markdown(f'-[{source.replace("Source ", "" )}] {capitulo}, {articulo}\n')
 
         with col3:
             st.subheader("Comparación")

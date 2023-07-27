@@ -43,7 +43,7 @@ def get_final_response(query, response_vigente, response_propuesta):
             the diferences of two constitutions about this topic: {query}.
 
             The first constitution is the current one, and the second one is a proposed one.
-            Always refer to the first constitution as "Constitución Actual" and the second one as "Constitución Propuesta".
+            Always refer to the first constitution as Constitución Actual and the second one as Constitución Propuesta.
 
             The first constituion says the following about the topic: {first_response}.
             The second constituion says the following about the topic: {second_response}.
