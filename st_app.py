@@ -2,7 +2,7 @@
 import streamlit as st
 from citation_engine import create_index, create_query_engine, get_final_response
 from stream_handler import StreamHandler
-
+import re
 
 st.set_page_config(layout="wide")
 padding_left = 5
@@ -51,20 +51,28 @@ if st.button("Consultar"):
     with col1:
         st.subheader("Constitución Actual")
         response_vigente_final = stream_llamaindex_response(st.empty(), response_vigente)
-        st.subheader("Fuentes")
-        for node in response_vigente.source_nodes:
-            [source, capitulo, articulo] = node.node.get_text().split('\n', 3)[0:3]
-            st.markdown(f'[{source.replace("Source ", "" ).replace(":", "")}] {capitulo}, {articulo}\n')
+        sources_vigente_idx = set(re.findall(r'[\d]', response_vigente_final))
+        if len(sources_vigente_idx) > 0:
+            st.subheader("Fuentes")
+            for idx in sources_vigente_idx:
+                node = response_vigente.source_nodes[int(idx)-1]
+                [source, capitulo, articulo] = node.node.get_text().split('\n', 3)[0:3]
+                st.markdown(f'[{source.replace("Source ", "" ).replace(":", "")}] {capitulo}, {articulo}\n')
 
     response_propuesta = query_engine_propuesta.query(prompt)
     with col2:
         st.subheader("Constitución Propuesta")
         response_propuesta_final = stream_llamaindex_response(st.empty(), response_propuesta)
-        st.subheader("Fuentes")
-        for node in response_propuesta.source_nodes:
-            [source, capitulo, articulo] = node.node.get_text().split('\n', 3)[0:3]
-            st.markdown(f'[{source.replace("Source ", "" ).replace(":", "")}] {capitulo}, {articulo}\n')
+        sources_propuesta_idx = set(re.findall(r'[\d]', response_propuesta_final))
+        if len(sources_propuesta_idx) > 0:
+            st.subheader("Fuentes")
+            for idx in sources_propuesta_idx:
+                node = response_propuesta.source_nodes[int(idx)-1]
+                [source, capitulo, articulo] = node.node.get_text().split('\n', 3)[0:3]
+                st.markdown(f'[{source.replace("Source ", "" ).replace(":", "")}] {capitulo}, {articulo}\n')
 
-    st.subheader("Comparación")
-    st_callback = StreamHandler(st.empty(), display_method='markdown')
-    response_final = get_final_response(prompt, response_vigente_final, response_propuesta_final, st_callback)    
+    if len(sources_vigente_idx) + len(sources_propuesta_idx) > 0:
+        st.subheader("Comparación")
+        st_callback = StreamHandler(st.empty(), display_method='markdown')
+        response_final = get_final_response(prompt, response_vigente_final,
+                                            response_propuesta_final, st_callback) 
