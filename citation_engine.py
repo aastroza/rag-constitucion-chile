@@ -3,6 +3,8 @@ from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.llms import OpenAI
+from llama_index.langchain_helpers.text_splitter import SentenceSplitter
+from llama_index.node_parser.simple import SimpleNodeParser
 from llama_index.query_engine import CitationQueryEngine
 from llama_index import (
     VectorStoreIndex,
@@ -19,9 +21,14 @@ openai.api_key = os.environ["OPENAI_API_KEY"]
 
 
 def create_index(documents_path = "data/documents/", persist_dir = "./citation", ):
-
+    text_splitter = SentenceSplitter(separator=";\n", chunk_size=1024,
+                                    chunk_overlap=0)
+    node_parser = SimpleNodeParser(text_splitter=text_splitter)
     service_context = ServiceContext.from_defaults(
-    llm_predictor=LLMPredictor(llm=ChatOpenAI(model_name='gpt-4', temperature=0, streaming=True))
+    llm_predictor=LLMPredictor(
+        llm=ChatOpenAI(model_name='gpt-4', temperature=0,
+                                              streaming=True)),
+        node_parser=node_parser
     )
 
     documents = SimpleDirectoryReader(documents_path).load_data()
@@ -30,12 +37,13 @@ def create_index(documents_path = "data/documents/", persist_dir = "./citation",
     return index
 
 def create_query_engine(index):
+    text_splitter = SentenceSplitter(separator=";\n", chunk_size=1024,
+                                    chunk_overlap=0)
     query_engine = CitationQueryEngine.from_args(
-        index, 
+        index,
+        text_splitter=text_splitter,
         similarity_top_k=3,
-        # here we can control how granular citation sources are, the default is 512
-        citation_chunk_size=1024,
-        streaming=True
+        streaming=True,
     )
 
     return query_engine
@@ -49,8 +57,8 @@ def get_final_response(query, response_vigente, response_propuesta, callback):
             The first constitution is the current one, and the second one is a proposed one.
             Always refer to the first constitution as Constitución Actual and the second one as Constitución Propuesta.
 
-            The first constituion says the following about the topic: {first_response}.
-            The second constituion says the following about the topic: {second_response}.
+            The first constitution says the following about the topic: {first_response}.
+            The second constitution says the following about the topic: {second_response}.
 
             Please detail the differences between the two constitutions about this topic.
             Please be concise and respond in spanish.
