@@ -1,5 +1,7 @@
 # RAG-Constitucion-Chile
 
+Platform to compare Chile's current constitution with its new proposed constitution. This is a proof-of-concept using RAG where the sources are the articles from each constitution. You can check out a demo here: https://rag-constitucion-chile.streamlit.app/ . Coming soon to https://discolab.cl/ 
+
 ## Getting Started
 
 Before you begin to run this project, there are a few prerequisites you will need to have in place:
