@@ -15,6 +15,7 @@ from llama_index import (
 from dotenv import load_dotenv
 import openai
 
+OPENAI_MODEL = 'gpt-4'
 
 load_dotenv()
 openai.api_key = os.environ["OPENAI_API_KEY"]
@@ -26,7 +27,7 @@ def create_index(documents_path = "data/documents/", persist_dir = "./citation",
     node_parser = SimpleNodeParser(text_splitter=text_splitter)
     service_context = ServiceContext.from_defaults(
     llm_predictor=LLMPredictor(
-        llm=ChatOpenAI(model_name='gpt-4', temperature=0,
+        llm=ChatOpenAI(model_name=OPENAI_MODEL, temperature=0,
                                               streaming=True)),
         node_parser=node_parser
     )
@@ -65,7 +66,7 @@ def get_final_response(query, response_vigente, response_propuesta, callback):
             
            """
     prompt = PromptTemplate(template=template, input_variables=["query", "first_response", "second_response"])
-    llm_chain = LLMChain(prompt=prompt, llm=ChatOpenAI(model_name='gpt-4', temperature=0, streaming=True, callbacks=[callback]))
+    llm_chain = LLMChain(prompt=prompt, llm=ChatOpenAI(model_name=OPENAI_MODEL, temperature=0, streaming=True, callbacks=[callback]))
 
     final_response = llm_chain.predict(query=query, first_response=response_vigente,
                                        second_response=response_propuesta)

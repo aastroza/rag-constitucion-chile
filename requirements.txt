@@ -4,3 +4,4 @@ llama-index
 langchain
 python-dotenv
 nltk
+modal

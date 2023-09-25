@@ -16,3 +16,4 @@ class StreamHandler(BaseCallbackHandler):
             display_function(self.text)
         else:
             raise ValueError(f"Invalid display_method: {self.display_method}")
+        
