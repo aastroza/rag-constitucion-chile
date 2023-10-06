@@ -9,7 +9,8 @@ from llm import create_index, get_response, create_query_engine, get_final_respo
 from dotenv import load_dotenv
 from pathlib import Path
 import re
-
+import time
+import asyncio
 
 load_dotenv()
 
@@ -41,13 +42,10 @@ class Query(BaseModel):
     query: str
 
 class Answer(BaseModel):
-    question: str
-    answer_doc1: str
-    sources_doc1: List[str]
-    answer_doc2: str
-    sources_doc2: List[str]
     answer: str
-    llm: str
+
+class Token(BaseModel):
+    token: str
 
 
 def get_index_vigente():
@@ -58,6 +56,8 @@ def get_index_propuesta():
 
 query_engine_vigente = create_query_engine(get_index_vigente())
 query_engine_propuesta = create_query_engine(get_index_propuesta())
+
+responses = {}
 
 def stream_llamaindex_response(response):
     result = ""
@@ -76,7 +76,7 @@ def produce_streaming_answer(qe_result1, qe_result2, prompt):
     answer = []
     for answer_piece in qe_result1["answer"].response_gen:
         answer.append(answer_piece)
-        yield answer_piece
+        yield f'{{"content" : "{answer_piece}"}}\n'
     response_final_1 = "".join(answer)
 
     yield "\n\n**[SOURCES DOCUMENT 1]**\n"
@@ -91,7 +91,7 @@ def produce_streaming_answer(qe_result1, qe_result2, prompt):
     answer = []
     for answer_piece in qe_result2["answer"].response_gen:
         answer.append(answer_piece)
-        yield answer_piece
+        yield f'{{"content" : "{answer_piece}"}}\n'
     response_final_2 = "".join(answer)
 
     yield "\n\n**[SOURCES DOCUMENT 2]**\n"
@@ -106,7 +106,49 @@ def produce_streaming_answer(qe_result1, qe_result2, prompt):
         yield "\n\n**[FINAL RESPONSE]**\n"
         response_final = get_final_response_llama_index(query=prompt, first_response=response_final_1, second_response=response_final_2)
         for answer_piece in response_final.response_gen:
-            yield answer_piece
+            yield f'{{"content" : "{answer_piece}"}}\n'
+    
+    yield "\n\n**[END]**\n"
+
+async def produce_streaming_output(qe_result1, qe_result2, prompt, token):
+    
+    responses[token] += "\n\n**[DOCUMENT 1]**\n"
+    answer = []
+    for answer_piece in qe_result1["answer"].response_gen:
+        answer.append(answer_piece)
+        responses[token] += answer_piece
+    response_final_1 = "".join(answer)
+
+    responses[token] += "\n\n**[SOURCES DOCUMENT 1]**\n"
+    sources_idx_1 = set(re.findall(r'[\d]', response_final_1))
+    if len(sources_idx_1) > 0:
+        for idx in sources_idx_1:
+            node = qe_result1["answer"].source_nodes[int(idx)-1]
+            [source, capitulo, articulo] = node.node.get_text().split('\n', 3)[0:3]
+            responses[token] += f'[{source.replace("Source ", "" ).replace(":", "")}] {capitulo}, {articulo}\n'
+
+    responses[token] += "\n\n**[DOCUMENT 2]**\n"
+    answer = []
+    for answer_piece in qe_result2["answer"].response_gen:
+        answer.append(answer_piece)
+        responses[token] += answer_piece
+    response_final_2 = "".join(answer)
+
+    responses[token] += "\n\n**[SOURCES DOCUMENT 2]**\n"
+    sources_idx_2 = set(re.findall(r'[\d]', response_final_2))
+    if len(sources_idx_2) > 0:
+        for idx in sources_idx_2:
+            node = qe_result2["answer"].source_nodes[int(idx)-1]
+            [source, capitulo, articulo] = node.node.get_text().split('\n', 3)[0:3]
+            responses[token] += f'[{source.replace("Source ", "" ).replace(":", "")}] {capitulo}, {articulo}\n'
+    
+    if len(sources_idx_1) + len(sources_idx_2) > 0:
+        responses[token] += "\n\n**[FINAL RESPONSE]**\n"
+        response_final = get_final_response_llama_index(query=prompt, first_response=response_final_1, second_response=response_final_2)
+        for answer_piece in response_final.response_gen:
+            responses[token] += answer_piece
+    
+    responses[token] += "\n\n**[END]**\n"
 
 @app.post("/stream")
 def stream(query: Query) -> StreamingResponse:
@@ -116,6 +158,20 @@ def stream(query: Query) -> StreamingResponse:
     #print(result["answer"].source_nodes)
     return StreamingResponse(
         produce_streaming_answer(qe_result1 = result1, qe_result2 = result2, prompt=query.query), media_type="text/event-stream")
+
+@app.post("/start")
+async def start(query: Query) -> Token:
+    print(query.query)
+    result1 = get_response(query_engine_vigente, query.query)
+    result2 = get_response(query_engine_propuesta, query.query)
+    token = str(time.time())
+    responses[token] = ''
+    asyncio.run(produce_streaming_output(qe_result1 = result1, qe_result2 = result2, prompt=query.query, token=token))
+    return Token(token=token)
+
+@app.get("/completion/{token}")
+async def read_completion(token: str) -> Answer:
+    return Answer(answer=responses[token])
 
 @stub.function(
     mounts=[Mount.from_local_dir(static_path, remote_path="/root/static")],

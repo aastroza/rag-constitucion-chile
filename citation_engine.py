@@ -15,7 +15,7 @@ from llama_index import (
 from dotenv import load_dotenv
 import openai
 
-OPENAI_MODEL = 'gpt-4'
+OPENAI_MODEL = 'gpt-3.5-turbo'
 
 load_dotenv()
 openai.api_key = os.environ["OPENAI_API_KEY"]
